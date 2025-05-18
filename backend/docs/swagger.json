@@ -1,0 +1,1849 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API Service for managing patients, symptoms, and diseases.",
+        "title": "Patient API Service",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/disease-instances/{instanceID}": {
+            "delete": {
+                "description": "Remove a specific patient_disease entry by its unique ID (patient_disease_id). This also removes associated symptom links via ON DELETE CASCADE.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "Delete a specific disease instance record",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient Disease Instance ID",
+                        "name": "instanceID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content (Successful removal)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/disease-instances/{instanceID}/symptoms": {
+            "get": {
+                "description": "Get all symptoms linked to a specific patient_disease record (diagnosis instance).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "List symptoms for a specific disease instance",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient Disease Instance ID",
+                        "name": "instanceID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved symptoms for the instance",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.GetSymptomsForPatientDiseaseInstanceRow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Instance ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Disease instance not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create an association between an existing symptom and a specific patient disease instance.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "Link a symptom to a disease instance",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient Disease Instance ID",
+                        "name": "instanceID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Symptom ID to link",
+                        "name": "link",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.LinkSymptomToDiseaseInstanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Symptom linked successfully",
+                        "schema": {
+                            "$ref": "#/definitions/db.PatientDiseaseSymptom"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Instance ID or request payload",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Disease instance or Symptom not found (FK constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "409": {
+                        "description": "Symptom already linked to this instance (unique constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/disease-instances/{instanceID}/symptoms/{symptomID}": {
+            "delete": {
+                "description": "Remove the association between a symptom and a specific patient disease instance.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "Unlink a symptom from a disease instance",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient Disease Instance ID",
+                        "name": "instanceID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Symptom ID to unlink",
+                        "name": "symptomID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content (Successful removal)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Instance ID or Symptom ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/diseases": {
+            "get": {
+                "description": "Get a list of all diseases",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Diseases"
+                ],
+                "summary": "List diseases",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of diseases",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.DiseaseResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a new disease record",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Diseases"
+                ],
+                "summary": "Create a new disease",
+                "parameters": [
+                    {
+                        "description": "Disease data to create",
+                        "name": "disease",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.CreateDiseaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Disease created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/server.DiseaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/diseases/{diseaseID}": {
+            "get": {
+                "description": "Retrieve details of a specific disease by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Diseases"
+                ],
+                "summary": "Get disease by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Disease ID",
+                        "name": "diseaseID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved disease",
+                        "schema": {
+                            "$ref": "#/definitions/server.DiseaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Disease ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Disease not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update details for an existing disease",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Diseases"
+                ],
+                "summary": "Update disease details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Disease ID",
+                        "name": "diseaseID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Disease data to update",
+                        "name": "disease",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.UpdateDiseaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Disease updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/server.DiseaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Disease not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a disease record by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Diseases"
+                ],
+                "summary": "Delete disease",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Disease ID",
+                        "name": "diseaseID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content (Successful deletion)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Disease ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/patient-symptoms/{id}": {
+            "delete": {
+                "description": "Remove a specific patient_symptoms entry by its unique ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "Delete a specific general symptom record",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient Symptom Record ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content (Successful removal)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/patients": {
+            "get": {
+                "description": "Get a paginated list of patients",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "List patients",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Pagination limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Pagination offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of patients",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.PatientResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a new patient record to the database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Create a new patient",
+                "parameters": [
+                    {
+                        "description": "Patient data to create",
+                        "name": "patient",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.CreatePatientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Patient created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/server.PatientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error (e.g., DB error)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/patients/{patientID}": {
+            "get": {
+                "description": "Retrieve details of a specific patient by their ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Get patient by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved patient",
+                        "schema": {
+                            "$ref": "#/definitions/server.PatientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Patient ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Patient not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update details for an existing patient",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Update patient details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Patient data to update",
+                        "name": "patient",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.UpdatePatientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Patient updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/server.PatientResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Patient not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a patient record by ID. Associated records in junction tables (patient_symptoms, patient_disease) should be removed via ON DELETE CASCADE.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Delete patient",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content (Successful deletion)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Patient ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/patients/{patientID}/details": {
+            "get": {
+                "description": "Retrieve patient details along with aggregated lists of their general symptoms and distinct diseases recorded. Uses the GetPatientSummary query.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Get patient summary details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved patient summary details",
+                        "schema": {
+                            "$ref": "#/definitions/server.PatientDetailsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Patient ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Patient not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/patients/{patientID}/disease-instances": {
+            "get": {
+                "description": "Get all recorded disease instances (diagnoses) for a given patient ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "List disease instances for a specific patient",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved disease instances",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.PatientDiseaseInstanceResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Patient ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a record of a specific disease diagnosis for a patient, with optional date and notes.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "Record a disease instance for a patient",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Disease ID, optional diagnosis date and notes",
+                        "name": "instance",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.RecordPatientDiseaseInstanceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Disease instance recorded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/db.PatientDisease"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Patient ID or request payload",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Patient or Disease not found (FK constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicate instance for this patient/disease/date (unique constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/patients/{patientID}/general-symptoms": {
+            "get": {
+                "description": "Get all symptoms associated with a given patient ID via the patient_symptoms table (not linked to specific diagnoses).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "List general symptoms reported by a patient",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved general symptoms for patient",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/db.ListGeneralSymptomsForPatientRow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Patient ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Associate an existing symptom with a patient (not tied to a specific diagnosis instance). Optionally include the date it was reported.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Patient Relationships"
+                ],
+                "summary": "Record a general symptom for a patient",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Patient ID",
+                        "name": "patientID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Symptom ID and optional reported date",
+                        "name": "symptom",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.RecordPatientSymptomRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Symptom recorded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/db.PatientSymptom"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Patient ID or request payload",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Patient or Symptom not found (FK constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "409": {
+                        "description": "Relationship already exists for this date (unique constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/predict": {
+            "post": {
+                "description": "Accepts feature data in JSON format, forwards it to the configured Flask ML service, and returns the prediction result. The 'features' field in the request body can be a single JSON object or an array of JSON objects.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "predictions"
+                ],
+                "summary": "Proxy Prediction Request",
+                "parameters": [
+                    {
+                        "description": "Prediction Request Features (single object or array of objects)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.PredictRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful prediction response (forwarded from Flask)",
+                        "schema": {
+                            "$ref": "#/definitions/server.PredictResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Invalid JSON format or missing 'features' key",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error - Error during proxy processing or creating request",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway - Failed to contact or get a valid response from the backend Flask service",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/symptoms": {
+            "get": {
+                "description": "Get a list of all symptoms",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Symptoms"
+                ],
+                "summary": "List symptoms",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved list of symptoms",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.SymptomResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a new symptom record. Symptom name is required.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Symptoms"
+                ],
+                "summary": "Create a new symptom",
+                "parameters": [
+                    {
+                        "description": "Symptom data to create",
+                        "name": "symptom",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.CreateSymptomRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Symptom created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/server.SymptomResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or missing symptom name",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "409": {
+                        "description": "Symptom name already exists (unique constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/symptoms/{symptomID}": {
+            "get": {
+                "description": "Retrieve details of a specific symptom by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Symptoms"
+                ],
+                "summary": "Get symptom by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Symptom ID",
+                        "name": "symptomID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved symptom",
+                        "schema": {
+                            "$ref": "#/definitions/server.SymptomResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Symptom ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Symptom not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update details for an existing symptom. Symptom name is required.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Symptoms"
+                ],
+                "summary": "Update symptom details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Symptom ID",
+                        "name": "symptomID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Symptom data to update",
+                        "name": "symptom",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.UpdateSymptomRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Symptom updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/server.SymptomResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or missing symptom name",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "404": {
+                        "description": "Symptom not found",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "409": {
+                        "description": "Symptom name already exists (unique constraint)",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a symptom record by ID. Associated records in junction tables (patient_symptoms, patient_disease_symptom) should be removed via ON DELETE CASCADE.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Symptoms"
+                ],
+                "summary": "Delete symptom",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Symptom ID",
+                        "name": "symptomID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content (Successful deletion)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Symptom ID format",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.HTTPError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "db.GetSymptomsForPatientDiseaseInstanceRow": {
+            "type": "object",
+            "properties": {
+                "symptomDescription": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "symptomID": {
+                    "type": "integer"
+                },
+                "symptomName": {
+                    "type": "string"
+                }
+            }
+        },
+        "db.ListGeneralSymptomsForPatientRow": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "reportedDate": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "symptomDescription": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "symptomID": {
+                    "type": "integer"
+                },
+                "symptomName": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "db.PatientDisease": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "diagnosisDate": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "diseaseID": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "patientDiseaseID": {
+                    "type": "integer"
+                },
+                "patientID": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "db.PatientDiseaseSymptom": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "patientDiseaseID": {
+                    "type": "integer"
+                },
+                "symptomID": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "db.PatientSymptom": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "patientID": {
+                    "type": "integer"
+                },
+                "reportedDate": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "symptomID": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "pgtype.Date": {
+            "type": "object",
+            "properties": {
+                "infinityModifier": {
+                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                },
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.InfinityModifier": {
+            "type": "integer",
+            "enum": [
+                1,
+                0,
+                -1
+            ],
+            "x-enum-varnames": [
+                "Infinity",
+                "Finite",
+                "NegativeInfinity"
+            ]
+        },
+        "pgtype.Text": {
+            "type": "object",
+            "properties": {
+                "string": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.Timestamp": {
+            "type": "object",
+            "properties": {
+                "infinityModifier": {
+                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                },
+                "time": {
+                    "description": "Time zone will be ignored when encoding to PostgreSQL.",
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "server.CreateDiseaseRequest": {
+            "type": "object",
+            "properties": {
+                "disease_code": {
+                    "type": "string"
+                },
+                "disease_description": {
+                    "type": "string"
+                },
+                "disease_name": {
+                    "type": "string"
+                },
+                "disease_treatment": {
+                    "description": "Accept raw JSON",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "server.CreatePatientRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Use pointer for optional field",
+                    "type": "string"
+                },
+                "age": {
+                    "type": "integer"
+                },
+                "birthdate": {
+                    "description": "Expect YYYY-MM-DD string",
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "phonenumber": {
+                    "type": "string"
+                },
+                "register": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.CreateSymptomRequest": {
+            "type": "object",
+            "properties": {
+                "symptom_description": {
+                    "type": "string"
+                },
+                "symptom_name": {
+                    "description": "Changed to string (required)",
+                    "type": "string"
+                }
+            }
+        },
+        "server.DiseaseResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Or format as string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/pgtype.Timestamp"
+                        }
+                    ]
+                },
+                "disease_code": {
+                    "type": "string"
+                },
+                "disease_description": {
+                    "type": "string"
+                },
+                "disease_id": {
+                    "type": "integer"
+                },
+                "disease_name": {
+                    "type": "string"
+                },
+                "disease_treatment": {
+                    "description": "Send raw JSON back",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "updated_at": {
+                    "description": "Or format as string",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/pgtype.Timestamp"
+                        }
+                    ]
+                }
+            }
+        },
+        "server.HTTPError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error message",
+                    "type": "string",
+                    "example": "Resource not found"
+                }
+            }
+        },
+        "server.LinkSymptomToDiseaseInstanceRequest": {
+            "type": "object",
+            "properties": {
+                "symptom_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "server.PatientDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "distinct_diseases_list": {
+                    "description": "Parsed list from patient_disease",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "general_symptoms_list": {
+                    "description": "Parsed list from patient_symptoms",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "patient_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "server.PatientDiseaseInstanceResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "diagnosis_date": {
+                    "$ref": "#/definitions/pgtype.Date"
+                },
+                "disease_code": {
+                    "description": "Added from join",
+                    "type": "string"
+                },
+                "disease_id": {
+                    "type": "integer"
+                },
+                "disease_name": {
+                    "description": "Added from join",
+                    "type": "string"
+                },
+                "notes": {
+                    "description": "Keep as pointer",
+                    "type": "string"
+                },
+                "patient_disease_id": {
+                    "type": "integer"
+                },
+                "patient_id": {
+                    "description": "Added for context",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "server.PatientResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "string or null",
+                    "type": "string"
+                },
+                "age": {
+                    "type": "integer"
+                },
+                "birthdate": {
+                    "description": "YYYY-MM-DD or null",
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "patient_id": {
+                    "type": "integer"
+                },
+                "phonenumber": {
+                    "type": "string"
+                },
+                "register": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.PredictRequest": {
+            "type": "object"
+        },
+        "server.PredictResponse": {
+            "type": "object",
+            "properties": {
+                "predictions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "[\"ClassA\"",
+                        " \"ClassB\"]"
+                    ]
+                }
+            }
+        },
+        "server.RecordPatientDiseaseInstanceRequest": {
+            "type": "object",
+            "properties": {
+                "diagnosis_date": {
+                    "description": "Use pointer for optional date",
+                    "type": "string"
+                },
+                "disease_id": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "description": "Use pointer for optional notes",
+                    "type": "string"
+                }
+            }
+        },
+        "server.RecordPatientSymptomRequest": {
+            "type": "object",
+            "properties": {
+                "reported_date": {
+                    "description": "Use pointer for optional date",
+                    "type": "string"
+                },
+                "symptom_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "server.SymptomResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "symptom_description": {
+                    "type": "string"
+                },
+                "symptom_id": {
+                    "type": "integer"
+                },
+                "symptom_name": {
+                    "description": "Changed to string (cannot be null)",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "server.UpdateDiseaseRequest": {
+            "type": "object",
+            "properties": {
+                "disease_code": {
+                    "type": "string"
+                },
+                "disease_description": {
+                    "type": "string"
+                },
+                "disease_name": {
+                    "type": "string"
+                },
+                "disease_treatment": {
+                    "description": "Accept raw JSON",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "server.UpdatePatientRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "age": {
+                    "type": "integer"
+                },
+                "birthdate": {
+                    "description": "Expect YYYY-MM-DD string",
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "phonenumber": {
+                    "type": "string"
+                },
+                "register": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.UpdateSymptomRequest": {
+            "type": "object",
+            "properties": {
+                "symptom_description": {
+                    "type": "string"
+                },
+                "symptom_name": {
+                    "description": "Changed to string (required)",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

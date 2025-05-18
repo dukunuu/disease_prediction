@@ -1,0 +1,32 @@
+# .dockerignore
+
+# Python virtual environment
+venv/
+.venv/
+env/
+ENV/
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE config folders
+.vscode/
+.idea/
+
+# Git folder
+.git/
+
+*.log
+build/
+dist/
+*.egg-info/
+
+*/bin

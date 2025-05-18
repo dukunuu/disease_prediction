@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS patient_disease;
+DROP TABLE IF EXISTS patient_symptoms;
+
+DROP TABLE IF EXISTS disease;
+DROP TABLE IF EXISTS symptoms;
+DROP TABLE IF EXISTS patient;
